@@ -11,6 +11,7 @@
 #include <torch/csrc/autograd/python_function.h>
 #include <torch/csrc/autograd/function.h>
 #include <torch/csrc/autograd/saved_variable.h>
+#include <torch/csrc/autograd/python_saved_variable_hooks.h>
 #include <torch/csrc/autograd/utils/wrap_outputs.h>
 #include <torch/csrc/autograd/utils/python_arg_parsing.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
@@ -261,7 +262,9 @@ PyObject* THPAutograd_initExtension(PyObject* _unused, PyObject *unused) {
     }))
     .def("register_hooks", [](torch::autograd::SavedVariable &s, py::function &pack_hook, py::function &unpack_hook) {
         s.register_hooks();
-     });
+        // s.register_hook(std::make_unique<torch::autograd::PySavedVariableHooks>(pack_hook, unpack_hook));
+        // s.register_hook(std::make_unique<torch::autograd::PySavedVariableHooks>(pack_hook.release().ptr(), unpack_hook.release().ptr()));
+    });
 
   Py_RETURN_TRUE;
 }
