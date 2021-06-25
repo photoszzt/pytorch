@@ -1,15 +1,14 @@
-from . import sparsifier
-
-# Sparsifier
-from .sparsifier import BaseSparsifier
-
-# Parametrizations
-from .parametrization import MulBy
-
 # Variables
 from ._variables import get_sparse_mapping
 from ._variables import get_dynamic_sparse_quantized_mapping
 from ._variables import get_static_sparse_quantized_mapping
+
+# Sparsifier
+from .sparsifier.base_sparsifier import BaseSparsifier
+from .sparsifier.weight_norm_sparsifier import WeightNormSparsifier
+
+# Parametrizations
+from .sparsifier.parametrization import MulBy
 
 # === Experimental ===
 
@@ -18,3 +17,4 @@ from .experimental.pruner.parametrization import PruningParametrization
 
 # Pruner
 from .experimental.pruner.base_pruner import BasePruner
+
