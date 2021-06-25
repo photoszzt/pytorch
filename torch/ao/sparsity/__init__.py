@@ -1,4 +1,8 @@
 # Parametrizations
+from .parametrization import MulBy
+
+# === Experimental ===
+# Parametrizations
 from .experimental.pruner.parametrization import PruningParametrization
 
 # Pruner
