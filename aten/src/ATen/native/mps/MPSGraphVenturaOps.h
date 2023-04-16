@@ -1,11 +1,7 @@
 #pragma once
 #include <MetalPerformanceShadersGraph/MetalPerformanceShadersGraph.h>
 
-// TODO: Remove me when moved to MacOS 13
-#if !defined(__MAC_13_0) && \
-    (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
-
-@interface MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
+@interface unsupported_MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
 
 
 @property (readwrite, nonatomic) NSUInteger strideInX;
@@ -26,27 +22,16 @@
 @property (readwrite, nonatomic) MPSGraphTensorNamedDataLayout dataLayout;
 @property (readwrite, nonatomic) MPSGraphTensorNamedDataLayout weightsLayout;
 
-/*! @property   groups
- *  @discussion groups of the operation
- */
 @property (readwrite, nonatomic) NSUInteger groups;
-+(nullable instancetype) descriptorWithStrideInX:(NSUInteger) strideInX
-                                       strideInY:(NSUInteger) strideInY
-                                       strideInZ:(NSUInteger) strideInZ
-                                 dilationRateInX:(NSUInteger) dilationRateInX
-                                 dilationRateInY:(NSUInteger) dilationRateInY
-                                 dilationRateInZ:(NSUInteger) dilationRateInZ
-                                          groups:(NSUInteger) groups
-                                     paddingLeft:(NSUInteger) paddingLeft
-                                    paddingRight:(NSUInteger) paddingRight
-                                      paddingTop:(NSUInteger) paddingTop
-                                   paddingBottom:(NSUInteger) paddingBottom
-                                    paddingFront:(NSUInteger) paddingFront
-                                     paddingBack:(NSUInteger) paddingBack
-                                    paddingStyle:(MPSGraphPaddingStyle) paddingStyle
-                                      dataLayout:(MPSGraphTensorNamedDataLayout) dataLayout
-                                   weightsLayout:(MPSGraphTensorNamedDataLayout) weightsLayout;
+
 @end
+// TODO: Remove me when moved to MacOS 13
+#if !defined(__MAC_13_0) && \
+    (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
+
+@compatibility_alias MPSGraphConvolution3DOpDescriptor unsupported_MPSGraphConvolution3DOpDescriptor;
+
+
 #endif
 
 @interface MPSGraph (VenturaOps)
