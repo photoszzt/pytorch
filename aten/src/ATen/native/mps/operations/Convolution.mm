@@ -1,6 +1,7 @@
 //  Copyright © 2022 Apple Inc.
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/ConvUtils.h>
+#include <ATen/native/mps/MPSGraphVenturaOps.h>
 #include <ATen/native/mps/OperationUtils.h>
 
 namespace at::native {
@@ -105,7 +106,9 @@ Tensor _mps_convolution_impl(const Tensor& input_t,
                              IntArrayRef dilation,
                              int64_t groups,
                              c10::optional<IntArrayRef> input_shape) {
-  //TORCH_CHECK(input_t.dim() < 5, "Conv3D is not *yet* supported on MPS");
+  const bool is_macOS_13_0_or_newer = is_macos_13_or_newer();
+
+  TORCH_CHECK(((input_t.dim() < 5)|is_macOS_13_0_or_newer), "Conv3D is only supported on MPS for MacOS_13_2 or newer");
   bool is3DConv = input_t.dim() == 5;
 
   TORCH_CHECK(isFloatingType(input_t.scalar_type()), "Convolution is supported only for Floating types");
