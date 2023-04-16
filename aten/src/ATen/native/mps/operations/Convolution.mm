@@ -61,25 +61,32 @@
 @end
 
 
-@interface MPSGraph (VenturaOps132)
-
+@interface convolution3DWithSourceTensor: NSObject
 
 - (MPSGraphTensor * _Nonnull) convolution3DWithSourceTensor:(MPSGraphTensor * _Nonnull) source
                                     weightsTensor:(MPSGraphTensor * _Nonnull) weights
                                        descriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) descriptor
                                                       name:(NSString * _Nullable) name;
+@end
+
+@interface convolution3DDataGradientWithIncomingGradientTensor: NSObject
 
 - (MPSGraphTensor * _Nonnull) convolution3DDataGradientWithIncomingGradientTensor:(MPSGraphTensor * _Nonnull) incomingGradient
                                                           weightsTensor:(MPSGraphTensor * _Nonnull) weights
                                                             outputShape:(MPSShape * _Nonnull) outputShape
                                            forwardConvolutionDescriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) forwardConvolutionDescriptor
                                                                    name:(NSString * _Nullable) name;
+@end
 
-- (MPSGraphTensor * _Nonnull) convolution3DDataGradientWithIncomingGradientTensor:(MPSGraphTensor * _Nonnull) gradient
-                                                          weightsTensor:(MPSGraphTensor * _Nonnull) weights
-                                                      outputShapeTensor:(MPSGraphTensor * _Nonnull) outputShapeTensor
+@interface convolution3DWeightsGradientWithIncomingGradientTensor: NSObject
+
+- (MPSGraphTensor * _Nonnull) convolution3DWeightsGradientWithIncomingGradientTensor:(MPSGraphTensor * _Nonnull) incomingGradient
+                                                            sourceTensor:(MPSGraphTensor * _Nonnull) source
+                                                            outputShape:(MPSShape * _Nonnull) outputShape
                                            forwardConvolutionDescriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) forwardConvolutionDescriptor
-                                                                             name:(NSString * _Nullable) name;
+                                                                   name:(NSString * _Nullable) name;
+
+
 @end
 #endif
 
