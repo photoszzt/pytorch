@@ -5,6 +5,22 @@
 
 #include <ATen/native/mps/MPSGraphVenturaOps.h>
 
+#if !defined(__MAC_13_0) && \
+    (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
+
+
+@implementation MPSGraphConvolution3DOpDescriptor
+
+
++ (nullable instancetype)descriptorWithStrideInX:(NSUInteger)strideInX strideInY:(NSUInteger)strideInY strideInZ:(NSUInteger)strideInZ dilationRateInX:(NSUInteger)dilationRateInX dilationRateInY:(NSUInteger)dilationRateInY dilationRateInZ:(NSUInteger)dilationRateInZ groups:(NSUInteger)groups paddingLeft:(NSUInteger)paddingLeft paddingRight:(NSUInteger)paddingRight paddingTop:(NSUInteger)paddingTop paddingBottom:(NSUInteger)paddingBottom paddingFront:(NSUInteger)paddingFront paddingBack:(NSUInteger)paddingBack paddingStyle:(MPSGraphPaddingStyle)paddingStyle dataLayout:(MPSGraphTensorNamedDataLayout)dataLayout weightsLayout:(MPSGraphTensorNamedDataLayout)weightsLayout {
+    return Nil;
+}
+- (nonnull id)copyWithZone:(nullable NSZone *)zone {
+    return self;
+}
+
+@end
+#endif
 
 namespace at::native {
 // Create 3D convolution descriptor

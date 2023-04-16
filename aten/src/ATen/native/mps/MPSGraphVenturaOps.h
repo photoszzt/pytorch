@@ -7,6 +7,7 @@
 
 @interface MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
 
+
 @property (readwrite, nonatomic) NSUInteger strideInX;
 @property (readwrite, nonatomic) NSUInteger strideInY;
 @property (readwrite, nonatomic) NSUInteger strideInZ;
@@ -45,18 +46,6 @@
                                     paddingStyle:(MPSGraphPaddingStyle) paddingStyle
                                       dataLayout:(MPSGraphTensorNamedDataLayout) dataLayout
                                    weightsLayout:(MPSGraphTensorNamedDataLayout) weightsLayout;
-@end
-
-@implementation MPSGraphConvolution3DOpDescriptor
-
-
-+ (nullable instancetype)descriptorWithStrideInX:(NSUInteger)strideInX strideInY:(NSUInteger)strideInY strideInZ:(NSUInteger)strideInZ dilationRateInX:(NSUInteger)dilationRateInX dilationRateInY:(NSUInteger)dilationRateInY dilationRateInZ:(NSUInteger)dilationRateInZ groups:(NSUInteger)groups paddingLeft:(NSUInteger)paddingLeft paddingRight:(NSUInteger)paddingRight paddingTop:(NSUInteger)paddingTop paddingBottom:(NSUInteger)paddingBottom paddingFront:(NSUInteger)paddingFront paddingBack:(NSUInteger)paddingBack paddingStyle:(MPSGraphPaddingStyle)paddingStyle dataLayout:(MPSGraphTensorNamedDataLayout)dataLayout weightsLayout:(MPSGraphTensorNamedDataLayout)weightsLayout {
-    return Nil;
-}
-- (nonnull id)copyWithZone:(nullable NSZone *)zone {
-    return self;
-}
-
 @end
 #endif
 
