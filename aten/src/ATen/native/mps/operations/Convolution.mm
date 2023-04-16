@@ -4,6 +4,85 @@
 #include <ATen/native/mps/MPSGraphVenturaOps.h>
 #include <ATen/native/mps/OperationUtils.h>
 
+#if !defined(__MAC_13_0) && \
+    (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
+
+
+@interface MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
+
+@property (readwrite, nonatomic) NSUInteger strideInX;
+@property (readwrite, nonatomic) NSUInteger strideInY;
+@property (readwrite, nonatomic) NSUInteger strideInZ;
+@property (readwrite, nonatomic) NSUInteger dilationRateInX;
+@property (readwrite, nonatomic) NSUInteger dilationRateInY;
+@property (readwrite, nonatomic) NSUInteger dilationRateInZ;
+
+@property (readwrite, nonatomic) NSUInteger paddingLeft;
+@property (readwrite, nonatomic) NSUInteger paddingRight;
+@property (readwrite, nonatomic) NSUInteger paddingTop;
+@property (readwrite, nonatomic) NSUInteger paddingBottom;
+@property (readwrite, nonatomic) NSUInteger paddingFront;
+@property (readwrite, nonatomic) NSUInteger paddingBack;
+
+@property (readwrite, nonatomic) MPSGraphPaddingStyle paddingStyle;
+@property (readwrite, nonatomic) MPSGraphTensorNamedDataLayout dataLayout;
+@property (readwrite, nonatomic) MPSGraphTensorNamedDataLayout weightsLayout;
+
+/*! @property   groups
+ *  @discussion groups of the operation
+ */
+@property (readwrite, nonatomic) NSUInteger groups;
++(nullable instancetype) descriptorWithStrideInX:(NSUInteger) strideInX
+                                       strideInY:(NSUInteger) strideInY
+                                       strideInZ:(NSUInteger) strideInZ
+                                 dilationRateInX:(NSUInteger) dilationRateInX
+                                 dilationRateInY:(NSUInteger) dilationRateInY
+                                 dilationRateInZ:(NSUInteger) dilationRateInZ
+                                          groups:(NSUInteger) groups
+                                     paddingLeft:(NSUInteger) paddingLeft
+                                    paddingRight:(NSUInteger) paddingRight
+                                      paddingTop:(NSUInteger) paddingTop
+                                   paddingBottom:(NSUInteger) paddingBottom
+                                    paddingFront:(NSUInteger) paddingFront
+                                     paddingBack:(NSUInteger) paddingBack
+                                    paddingStyle:(MPSGraphPaddingStyle) paddingStyle
+                                      dataLayout:(MPSGraphTensorNamedDataLayout) dataLayout
+                                   weightsLayout:(MPSGraphTensorNamedDataLayout) weightsLayout;
+@end
+
+@implementation MPSGraphConvolution3DOpDescriptor
+
+
++ (nullable instancetype)descriptorWithStrideInX:(NSUInteger)strideInX strideInY:(NSUInteger)strideInY strideInZ:(NSUInteger)strideInZ dilationRateInX:(NSUInteger)dilationRateInX dilationRateInY:(NSUInteger)dilationRateInY dilationRateInZ:(NSUInteger)dilationRateInZ groups:(NSUInteger)groups paddingLeft:(NSUInteger)paddingLeft paddingRight:(NSUInteger)paddingRight paddingTop:(NSUInteger)paddingTop paddingBottom:(NSUInteger)paddingBottom paddingFront:(NSUInteger)paddingFront paddingBack:(NSUInteger)paddingBack paddingStyle:(MPSGraphPaddingStyle)paddingStyle dataLayout:(MPSGraphTensorNamedDataLayout)dataLayout weightsLayout:(MPSGraphTensorNamedDataLayout)weightsLayout {
+    return Nil;
+}
+- (nonnull id)copyWithZone:(nullable NSZone *)zone {
+    return self;
+}
+
+@end
+
+@interface MPSGraph (VenturaOps)
+
+- (MPSGraphTensor * _Nonnull) convolution3DWithSourceTensor:(MPSGraphTensor * _Nonnull) source
+                                    weightsTensor:(MPSGraphTensor * _Nonnull) weights
+                                       descriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) descriptor
+                                                      name:(NSString * _Nullable) name;
+
+- (MPSGraphTensor * _Nonnull) convolution3DDataGradientWithIncomingGradientTensor:(MPSGraphTensor * _Nonnull) incomingGradient
+                                                          weightsTensor:(MPSGraphTensor * _Nonnull) weights
+                                                            outputShape:(MPSShape * _Nonnull) outputShape
+                                           forwardConvolutionDescriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) forwardConvolutionDescriptor
+                                                                   name:(NSString * _Nullable) name;
+
+- (MPSGraphTensor * _Nonnull) convolution3DDataGradientWithIncomingGradientTensor:(MPSGraphTensor * _Nonnull) gradient
+                                                          weightsTensor:(MPSGraphTensor * _Nonnull) weights
+                                                      outputShapeTensor:(MPSGraphTensor * _Nonnull) outputShapeTensor
+                                           forwardConvolutionDescriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) forwardConvolutionDescriptor
+                                                                             name:(NSString * _Nullable) name;
+@end
+#endif
+
 namespace at::native {
 // Create 3D convolution descriptor
 void fill_conv3d_desc(MPSGraphConvolution3DOpDescriptor* descriptor_,
