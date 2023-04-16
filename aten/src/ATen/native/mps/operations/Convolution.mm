@@ -33,12 +33,13 @@ void fill_conv3d_desc(MPSGraphConvolution3DOpDescriptor* descriptor_,
   descriptor_.paddingBottom = paddingVertical;
   descriptor_.paddingFront = paddingDepth;
   descriptor_.paddingBack = paddingDepth;
-
+     
   // PyTorch always uses NCDHW memory layout for 3D tensors
-  descriptor_.dataLayout = MPSGraphTensorNamedDataLayoutNCDHW;
-    
+  descriptor_.dataLayout = (MPSGraphTensorNamedDataLayout)7L;//MPSGraphTensorNamedDataLayoutNCDHW;
+      
   // PyTorch always uses OIDHW memory layout for 3D weights
-  descriptor_.weightsLayout = MPSGraphTensorNamedDataLayoutOIDHW;
+  descriptor_.weightsLayout = (MPSGraphTensorNamedDataLayout)9L;//MPSGraphTensorNamedDataLayoutOIDHW;
+
   descriptor_.groups = groups; //not yet tested in Xcode/C++
 }
 void fill_depthwise_conv_desc(MPSGraphDepthwiseConvolution3DOpDescriptor* descriptor_,

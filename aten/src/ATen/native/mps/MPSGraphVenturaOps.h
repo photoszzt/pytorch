@@ -4,20 +4,7 @@
 // TODO: Remove me when moved to MacOS 13
 #if !defined(__MAC_13_0) && \
     (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
-typedef NS_ENUM(NSUInteger, MPSGraphTensorNamedDataLayout)
-{
-    MPSGraphTensorNamedDataLayoutNCHW       MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0)) MPS_SWIFT_NAME(NCHW)   =  0L,
-    MPSGraphTensorNamedDataLayoutNHWC       MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  1L,
-    MPSGraphTensorNamedDataLayoutOIHW       MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  2L,
-    MPSGraphTensorNamedDataLayoutHWIO       MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  3L,
-    MPSGraphTensorNamedDataLayoutCHW        MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  4L,
-    MPSGraphTensorNamedDataLayoutHWC        MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  5L,
-    MPSGraphTensorNamedDataLayoutHW         MPS_ENUM_AVAILABLE_STARTING(macos(11.0), ios(14.0), tvos(14.0))                        =  6L,
-    MPSGraphTensorNamedDataLayoutNCDHW      MPS_ENUM_AVAILABLE_STARTING(macos(13.2), ios(16.3), tvos(16.3))                        =  7L,
-    MPSGraphTensorNamedDataLayoutNDHWC      MPS_ENUM_AVAILABLE_STARTING(macos(13.2), ios(16.3), tvos(16.3))                        =  8L,
-    MPSGraphTensorNamedDataLayoutOIDHW      MPS_ENUM_AVAILABLE_STARTING(macos(13.2), ios(16.3), tvos(16.3))                        =  9L,
-    MPSGraphTensorNamedDataLayoutDHWIO      MPS_ENUM_AVAILABLE_STARTING(macos(13.2), ios(16.3), tvos(16.3))                        =  10L,
-};
+
 
 @interface MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
 
@@ -77,7 +64,6 @@ typedef NS_ENUM(NSUInteger, MPSGraphResizeNearestRoundingMode)
     MPSGraphResizeNearestRoundingModeRoundToEven       =  4L,
     MPSGraphResizeNearestRoundingModeRoundToOdd        =  5L,
 };
-#endif
 
 
 - (MPSGraphTensor * _Nonnull) convolution3DWithSourceTensor:(MPSGraphTensor * _Nonnull) source
@@ -96,6 +82,7 @@ typedef NS_ENUM(NSUInteger, MPSGraphResizeNearestRoundingMode)
                                                       outputShapeTensor:(MPSGraphTensor * _Nonnull) outputShapeTensor
                                            forwardConvolutionDescriptor:(MPSGraphConvolution3DOpDescriptor * _Nonnull) forwardConvolutionDescriptor
                                                                              name:(NSString * _Nullable) name;
+#endif
 
 - (MPSGraphTensor * _Nonnull)cumulativeSumWithTensor:(MPSGraphTensor * _Nonnull)tensor
                                                 axis:(NSInteger)axis
