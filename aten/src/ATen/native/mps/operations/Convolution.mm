@@ -8,14 +8,8 @@
 #if !defined(__MAC_13_0) && \
     (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
 
-    
-    
 @implementation MPSGraphConvolution3DOpDescriptor
 
-
-/*+ (nullable instancetype)descriptorWithStrideInX:(NSUInteger)strideInX strideInY:(NSUInteger)strideInY strideInZ:(NSUInteger)strideInZ dilationRateInX:(NSUInteger)dilationRateInX dilationRateInY:(NSUInteger)dilationRateInY dilationRateInZ:(NSUInteger)dilationRateInZ groups:(NSUInteger)groups paddingLeft:(NSUInteger)paddingLeft paddingRight:(NSUInteger)paddingRight paddingTop:(NSUInteger)paddingTop paddingBottom:(NSUInteger)paddingBottom paddingFront:(NSUInteger)paddingFront paddingBack:(NSUInteger)paddingBack paddingStyle:(MPSGraphPaddingStyle)paddingStyle dataLayout:(MPSGraphTensorNamedDataLayout)dataLayout weightsLayout:(MPSGraphTensorNamedDataLayout)weightsLayout {
-    return Nil;
-}*/
 - (nonnull id)copyWithZone:(nullable NSZone *)zone {
     return self;
 }
@@ -233,71 +227,72 @@ Tensor _mps_convolution_impl(const Tensor& input_t,
           MPSShape* weightShape = mps::getMPSShape(weight_t);
           bool isDepthwiseConv = ((groups > 1 && (weightShape[1].intValue == 1)) && inputShape.count >= 4 &&
                                   weightShape.count >= 4 && !is_channels_last);
-          if (isDepthwiseConv) {
-            fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
-                                     stride[1],
-                                     stride[0],
-                                     dilation[1],
-                                     dilation[0],
-                                     padding[1],
-                                     padding[0],
-                                     memory_format,
-                                     groups);
-          } else {
-              if (is3DConv){
-                  fill_conv3d_desc(conv3dDescriptor_,
+          
+            if (is3DConv){
+                fill_conv3d_desc(conv3dDescriptor_,
                                  stride[2],stride[1],stride[0],
                                  dilation[2],dilation[1],dilation[0],
                                  padding[2],padding[1],padding[0],
                                  groups);
-                  
-              } else {
-                  fill_conv_desc(conv2dDescriptor_,
-                                 stride[1],
-                                 stride[0],
-                                 dilation[1],
-                                 dilation[0],
-                                 padding[1],
-                                 padding[0],
-                                 memory_format,
-                                 groups);
-              }
-          }
+                
+            } else {
+                if (isDepthwiseConv) {
+                    fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
+                                             stride[1],
+                                             stride[0],
+                                             dilation[1],
+                                             dilation[0],
+                                             padding[1],
+                                             padding[0],
+                                             memory_format,
+                                             groups);
+                } else {
+                    fill_conv_desc(conv2dDescriptor_,
+                                   stride[1],
+                                   stride[0],
+                                   dilation[1],
+                                   dilation[0],
+                                   padding[1],
+                                   padding[0],
+                                   memory_format,
+                                   groups);
+                }
+            }
 
           MPSGraphTensor* inputTensor = native_mps::mpsGraphRankedPlaceHolder(
               mpsGraph, native_mps::getMPSScalarType(input_t.scalar_type()), inputShape);
           MPSGraphTensor* weightTensor = native_mps::mpsGraphRankedPlaceHolder(mpsGraph, weight_t);
 
-          MPSGraphTensor* biasTensor = nil;
-          if (bias_defined) {
-            biasTensor =
-                native_mps::mpsGraphUnrankedPlaceHolder(mpsGraph, native_mps::getMPSDataType(bias_opt.value()));
-          }
-
-          MPSGraphTensor* outputTensor;
-          if (isDepthwiseConv) {
-            MPSGraphTensor* weightTransposeTensor = [mpsGraph transposeTensor:weightTensor
-                                                                    dimension:-3
-                                                                withDimension:-4
-                                                                         name:nil];
-            outputTensor = [mpsGraph depthwiseConvolution3DWithSourceTensor:inputTensor
-                                                              weightsTensor:weightTransposeTensor
-                                                                 descriptor:depthWiseConv3dDescriptor_
-                                                                       name:nil];
-          } else {
-              if(is3DConv){
-                  outputTensor = [mpsGraph convolution3DWithSourceTensor:inputTensor
-                                                           weightsTensor:weightTensor
-                                                              descriptor:conv3dDescriptor_
-                                                                    name:nil];
-                  
-              } else {
-                  outputTensor = [mpsGraph convolution2DWithSourceTensor:inputTensor
-                                                           weightsTensor:weightTensor
-                                                              descriptor:conv2dDescriptor_
-                                                                    name:nil];
-              }
-          }
+            MPSGraphTensor* biasTensor = nil;
+            MPSGraphTensor* outputTensor;
+            if(is3DConv){
+                outputTensor = [mpsGraph convolution3DWithSourceTensor:inputTensor
+                                                         weightsTensor:weightTensor
+                                                            descriptor:conv3dDescriptor_
+                                                                  name:nil];
+                
+            } else {
+                if (bias_defined) {
+                    biasTensor =
+                    native_mps::mpsGraphUnrankedPlaceHolder(mpsGraph, native_mps::getMPSDataType(bias_opt.value()));
+                }
+                
+                if (isDepthwiseConv) {
+                    MPSGraphTensor* weightTransposeTensor = [mpsGraph transposeTensor:weightTensor
+                                                                            dimension:-3
+                                                                        withDimension:-4
+                                                                                 name:nil];
+                    outputTensor = [mpsGraph depthwiseConvolution3DWithSourceTensor:inputTensor
+                                                                      weightsTensor:weightTransposeTensor
+                                                                         descriptor:depthWiseConv3dDescriptor_
+                                                                               name:nil];
+                } else {
+                    outputTensor = [mpsGraph convolution2DWithSourceTensor:inputTensor
+                                                             weightsTensor:weightTensor
+                                                                descriptor:conv2dDescriptor_
+                                                                      name:nil];
+                }
+            }
 
           if (is_channels_last) {
             outputTensor = mps::convertNHWCtoNCHW(mpsGraph, outputTensor);
@@ -439,35 +434,36 @@ Tensor mps_convolution_backward_input(IntArrayRef input_size,
           bool isDepthwiseConv = ((groups > 1 && (weightOutputShape[1].intValue == 1)) && gradOutputShape.count >= 4 &&
                                   weightOutputShape.count >= 4 && !is_channels_last);
 
-          if (isDepthwiseConv) {
-            fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
-                                     stride[1],
-                                     stride[0],
-                                     dilation[1],
-                                     dilation[0],
-                                     padding[1],
-                                     padding[0],
-                                     at::MemoryFormat::Contiguous,
-                                     groups);
-          } else {
-              if(is3DConv) {
-                  fill_conv3d_desc(conv3dDescriptor_,
+            if(is3DConv) {
+                fill_conv3d_desc(conv3dDescriptor_,
                                  stride[2],stride[1],stride[0],
                                  dilation[2],dilation[1],dilation[0],
                                  padding[2],padding[1],padding[0],
                                  groups);
-              } else {
-                  fill_conv_desc(conv2dDescriptor_,
-                                 stride[1],
-                                 stride[0],
-                                 dilation[1],
-                                 dilation[0],
-                                 padding[1],
-                                 padding[0],
-                                 at::MemoryFormat::Contiguous,
-                                 groups);
-              }
-          }
+            } else {
+                if (isDepthwiseConv) {
+                    fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
+                                             stride[1],
+                                             stride[0],
+                                             dilation[1],
+                                             dilation[0],
+                                             padding[1],
+                                             padding[0],
+                                             at::MemoryFormat::Contiguous,
+                                             groups);
+                } else {
+                    
+                    fill_conv_desc(conv2dDescriptor_,
+                                   stride[1],
+                                   stride[0],
+                                   dilation[1],
+                                   dilation[0],
+                                   padding[1],
+                                   padding[0],
+                                   at::MemoryFormat::Contiguous,
+                                   groups);
+                }
+            }
 
           MPSGraphTensor* gradOutputTensor = native_mps::mpsGraphRankedPlaceHolder(
               mpsGraph, native_mps::getMPSScalarType(grad_output_t.scalar_type()), gradOutputShape);
@@ -478,33 +474,34 @@ Tensor mps_convolution_backward_input(IntArrayRef input_size,
             gradOutputTensorTranspose = mps::convertNHWCtoNCHW(mpsGraph, gradOutputTensorTranspose);
           }
           MPSGraphTensor* gradInputTensor;
-          if (isDepthwiseConv) {
-            MPSGraphTensor* weightTransposeTensor = [mpsGraph transposeTensor:weightTensor
-                                                                    dimension:-3
-                                                                withDimension:-4
-                                                                         name:nil];
-            gradInputTensor =
-                [mpsGraph depthwiseConvolution3DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                         weightsTensor:weightTransposeTensor
-                                                                           outputShape:mps_input_shape
-                                                                            descriptor:depthWiseConv3dDescriptor_
-                                                                                  name:nil];
-          } else {
-              if (is3DConv){
-                  gradInputTensor = [mpsGraph convolution3DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                                    weightsTensor:weightTensor
-                                                                                      outputShape:mps_input_shape
-                                                                     forwardConvolutionDescriptor:conv3dDescriptor_
-                                                                                             name:nil];
-                  
-              } else {
-                  gradInputTensor = [mpsGraph convolution2DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                                    weightsTensor:weightTensor
-                                                                                      outputShape:mps_input_shape
-                                                                     forwardConvolutionDescriptor:conv2dDescriptor_
-                                                                                             name:nil];
-              }
-          }
+            if (is3DConv){
+                gradInputTensor = [mpsGraph convolution3DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                                  weightsTensor:weightTensor
+                                                                                    outputShape:mps_input_shape
+                                                                   forwardConvolutionDescriptor:conv3dDescriptor_
+                                                                                           name:nil];
+                
+            } else {
+                if (isDepthwiseConv) {
+                    MPSGraphTensor* weightTransposeTensor = [mpsGraph transposeTensor:weightTensor
+                                                                            dimension:-3
+                                                                        withDimension:-4
+                                                                                 name:nil];
+                    gradInputTensor =
+                    [mpsGraph depthwiseConvolution3DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                             weightsTensor:weightTransposeTensor
+                                                                               outputShape:mps_input_shape
+                                                                                descriptor:depthWiseConv3dDescriptor_
+                                                                                      name:nil];
+                } else {
+                    
+                    gradInputTensor = [mpsGraph convolution2DDataGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                                      weightsTensor:weightTensor
+                                                                                        outputShape:mps_input_shape
+                                                                       forwardConvolutionDescriptor:conv2dDescriptor_
+                                                                                               name:nil];
+                }
+            }
 
           newCachedGraph->gradOutputTensor_ = gradOutputTensor;
           newCachedGraph->weightTensor_ = weightTensor;
@@ -621,35 +618,36 @@ Tensor mps_convolution_backward_weights(IntArrayRef weight_size,
           bool isDepthwiseConv = ((groups > 1 && (mps_weight_shape[1].intValue == 1)) && inputShape.count >= 4 &&
                                   mps_weight_shape.count >= 4 && !is_channels_last);
 
-          if (isDepthwiseConv) {
-            fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
-                                     stride[1],
-                                     stride[0],
-                                     dilation[1],
-                                     dilation[0],
-                                     padding[1],
-                                     padding[0],
-                                     at::MemoryFormat::Contiguous,
-                                     groups);
-          } else {
-              if (is3DConv) {
-                  fill_conv3d_desc(conv3dDescriptor_,
+            if (is3DConv) {
+                fill_conv3d_desc(conv3dDescriptor_,
                                  stride[2],stride[1],stride[0],
                                  dilation[2],dilation[1],dilation[0],
                                  padding[2],padding[1],padding[0],
                                  groups);
-              } else {
-                  fill_conv_desc(conv2dDescriptor_,
-                                 stride[1],
-                                 stride[0],
-                                 dilation[1],
-                                 dilation[0],
-                                 padding[1],
-                                 padding[0],
-                                 at::MemoryFormat::Contiguous,
-                                 groups);
-              }
-          }
+            } else {
+                if (isDepthwiseConv) {
+                    fill_depthwise_conv_desc(depthWiseConv3dDescriptor_,
+                                             stride[1],
+                                             stride[0],
+                                             dilation[1],
+                                             dilation[0],
+                                             padding[1],
+                                             padding[0],
+                                             at::MemoryFormat::Contiguous,
+                                             groups);
+                } else {
+                    
+                    fill_conv_desc(conv2dDescriptor_,
+                                   stride[1],
+                                   stride[0],
+                                   dilation[1],
+                                   dilation[0],
+                                   padding[1],
+                                   padding[0],
+                                   at::MemoryFormat::Contiguous,
+                                   groups);
+                }
+            }
 
           MPSGraphTensor* gradOutputTensor = native_mps::mpsGraphRankedPlaceHolder(
               mpsGraph, native_mps::getMPSScalarType(grad_output_t.scalar_type()), gradOutputShape);
@@ -661,36 +659,38 @@ Tensor mps_convolution_backward_weights(IntArrayRef weight_size,
           }
 
           MPSGraphTensor* gradWeightTensor;
-          if (isDepthwiseConv) {
-            NSNumber* outputFeatChannelDim = mps_weight_shape[0];
-            MPSShape* weightShapeTranspose = @[ @1, outputFeatChannelDim, mps_weight_shape[2], mps_weight_shape[3] ];
-            MPSGraphTensor* gradWeightTensorTranspose =
-                [mpsGraph depthwiseConvolution3DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                             sourceTensor:inputTensor
-                                                                              outputShape:weightShapeTranspose
-                                                                               descriptor:depthWiseConv3dDescriptor_
-                                                                                     name:nil];
-            gradWeightTensor = [mpsGraph transposeTensor:gradWeightTensorTranspose
-                                               dimension:-3
-                                           withDimension:-4
-                                                    name:nil];
-          } else {
-              if (is3DConv) {
-                  gradWeightTensor =
-                  [mpsGraph convolution3DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                      sourceTensor:inputTensor
-                                                                       outputShape:mps_weight_shape
-                                                      forwardConvolutionDescriptor:conv3dDescriptor_
-                                                                              name:nil];
-              } else {
-                  gradWeightTensor =
-                  [mpsGraph convolution2DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
-                                                                      sourceTensor:inputTensor
-                                                                       outputShape:mps_weight_shape
-                                                      forwardConvolutionDescriptor:conv2dDescriptor_
-                                                                              name:nil];
-              }
-          }
+            
+            if (is3DConv) {
+                gradWeightTensor =
+                [mpsGraph convolution3DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                    sourceTensor:inputTensor
+                                                                     outputShape:mps_weight_shape
+                                                    forwardConvolutionDescriptor:conv3dDescriptor_
+                                                                            name:nil];
+            } else {
+                if (isDepthwiseConv) {
+                    NSNumber* outputFeatChannelDim = mps_weight_shape[0];
+                    MPSShape* weightShapeTranspose = @[ @1, outputFeatChannelDim, mps_weight_shape[2], mps_weight_shape[3] ];
+                    MPSGraphTensor* gradWeightTensorTranspose =
+                    [mpsGraph depthwiseConvolution3DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                                 sourceTensor:inputTensor
+                                                                                  outputShape:weightShapeTranspose
+                                                                                   descriptor:depthWiseConv3dDescriptor_
+                                                                                         name:nil];
+                    gradWeightTensor = [mpsGraph transposeTensor:gradWeightTensorTranspose
+                                                       dimension:-3
+                                                   withDimension:-4
+                                                            name:nil];
+                } else {
+                    
+                    gradWeightTensor =
+                    [mpsGraph convolution2DWeightsGradientWithIncomingGradientTensor:gradOutputTensorTranspose
+                                                                        sourceTensor:inputTensor
+                                                                         outputShape:mps_weight_shape
+                                                        forwardConvolutionDescriptor:conv2dDescriptor_
+                                                                                name:nil];
+                }
+            }
           newCachedGraph->gradOutputTensor_ = gradOutputTensor;
           newCachedGraph->inputTensor_ = inputTensor;
           newCachedGraph->gradWeightTensor_ = gradWeightTensor;
