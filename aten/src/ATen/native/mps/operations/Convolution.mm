@@ -1,12 +1,10 @@
 //  Copyright © 2022 Apple Inc.
 #define TORCH_ASSERT_ONLY_METHOD_OPERATORS
 #include <ATen/native/ConvUtils.h>
-#include <ATen/native/mps/MPSGraphVenturaOps.h>
 #include <ATen/native/mps/OperationUtils.h>
 
 #if !defined(__MAC_13_0) && \
     (!defined(MAC_OS_X_VERSION_13_0) || (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_13_0))
-
 
 @interface MPSGraphConvolution3DOpDescriptor : NSObject<NSCopying>
 
@@ -62,7 +60,9 @@
 
 @end
 
-@interface MPSGraph (VenturaOps)
+
+@interface MPSGraph (VenturaOps132)
+
 
 - (MPSGraphTensor * _Nonnull) convolution3DWithSourceTensor:(MPSGraphTensor * _Nonnull) source
                                     weightsTensor:(MPSGraphTensor * _Nonnull) weights
