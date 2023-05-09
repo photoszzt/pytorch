@@ -43,6 +43,7 @@
 #include <gloo/config.h>
 #include <gloo/rendezvous/context.h>
 #include <gloo/rendezvous/prefix_store.h>
+#include <fmt/format.h>
 
 #ifdef _WIN32
 #define GENERATE_ALL_TYPES(type, func, ...)      \
@@ -874,6 +875,7 @@ class AsyncBroadcastWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     broadcast(inputs[rootTensor]);
 
     // Copy to non-root tensors
@@ -883,6 +885,8 @@ class AsyncBroadcastWork : public ProcessGroupGloo::AsyncWork {
       }
       inputs[i].copy_(inputs[rootTensor]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("broadcast_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -907,6 +911,7 @@ class AsyncBroadcastCUDAWork : public AsyncBroadcastWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operation if applicable.
     if (context->rank == rootRank) {
       streams[rootTensor].synchronize();
@@ -922,6 +927,8 @@ class AsyncBroadcastCUDAWork : public AsyncBroadcastWork {
       inputs[i].copy_(tmp, /* non_blocking */ true);
       events[i].record(streams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("broadcastCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -1011,7 +1018,10 @@ class AsyncAllreduceWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     allreduce(inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allreduce_el: {} ms\n", elapsedTime.count());
   }
 
   template <typename T>
@@ -1038,7 +1048,10 @@ class AsyncAllreduceCoalescedWork : public AsyncAllreduceWork {
       : AsyncAllreduceWork(context, inputs, reduceOp, tag) {}
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     allreduceCoalesced(inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allreduceCoalesce_el: {} ms\n", elapsedTime.count());
   }
 
  private:
@@ -1203,6 +1216,7 @@ class AsyncSparseAllreduceWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     auto output = allreduce(inputs);
 
     // This copy is needed when we run a multi-gpu version of reduce (multiple
@@ -1210,6 +1224,8 @@ class AsyncSparseAllreduceWork : public ProcessGroupGloo::AsyncWork {
     for (const auto i : c10::irange(inputs.size())) {
       inputs[i].copy_(output);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("sparseAllreduce: {} ms\n", elapsedTime.count());
   }
 
  private:
@@ -1347,6 +1363,7 @@ class AsyncAllreduceCUDAWork : public AsyncAllreduceWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       streams[i].synchronize();
@@ -1361,6 +1378,8 @@ class AsyncAllreduceCUDAWork : public AsyncAllreduceWork {
       inputs[i].copy_(tmp[i], /* non_blocking */ true);
       events[i].record(streams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allreduceCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -1399,6 +1418,7 @@ class AsyncSparseAllreduceCUDAWork : public AsyncSparseAllreduceWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       streams[i].synchronize();
@@ -1414,6 +1434,8 @@ class AsyncSparseAllreduceCUDAWork : public AsyncSparseAllreduceWork {
       inputs[i].copy_(output, /*non_blocking=*/true);
       events[i].record(streams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("sparseAllReduceCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -1589,7 +1611,10 @@ class AsyncReduceWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     reduce(inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("reduce_el: {} ms\n", elapsedTime.count());
   }
 
  protected:
@@ -1629,6 +1654,7 @@ class AsyncReduceCUDAWork : public AsyncReduceWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       streams[i].synchronize();
@@ -1644,6 +1670,8 @@ class AsyncReduceCUDAWork : public AsyncReduceWork {
       inputs[i].copy_(tmp[i], /* non_blocking */ true);
       events[i].record(streams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("reduceCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -1759,7 +1787,10 @@ class AsyncAllgatherWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     allgather(outputs, inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allgather_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -1794,6 +1825,7 @@ class AsyncAllgatherCUDAWork : public AsyncAllgatherWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       inputStreams[i].synchronize();
@@ -1815,6 +1847,8 @@ class AsyncAllgatherCUDAWork : public AsyncAllgatherWork {
       }
       outputEvents[i].record(outputStreams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allgatherCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -1967,7 +2001,10 @@ class AsyncAllgatherCoalescedWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     allgather_coalesced();
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("allgatherCoalesced_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -2087,7 +2124,10 @@ class AsyncGatherWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     gather(outputs, inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("gather_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -2126,6 +2166,7 @@ class AsyncGatherCUDAWork : public AsyncGatherWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       inputStreams[i].synchronize();
@@ -2147,6 +2188,8 @@ class AsyncGatherCUDAWork : public AsyncGatherWork {
       }
       outputEvents[i].record(outputStreams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("gatherCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -2278,7 +2321,10 @@ class AsyncScatterWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     scatter(outputs, inputs);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("scatter_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -2313,6 +2359,7 @@ class AsyncScatterCUDAWork : public AsyncScatterWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     for (const auto i : c10::irange(inputs.size())) {
       inputStreams[i].synchronize();
@@ -2331,6 +2378,8 @@ class AsyncScatterCUDAWork : public AsyncScatterWork {
       outputs[i].copy_(tmpOutputs[i], /* non_blocking */ true);
       outputEvents[i].record(outputStreams[i]);
     }
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("scatterCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -2481,7 +2530,10 @@ class AsyncAlltoallWork : public ProcessGroupGloo::AsyncWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     alltoall(outputTensor, inputTensor);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("alltoall_el: {} ms\n", elapsedTime.count());
   }
 };
 
@@ -2514,6 +2566,7 @@ class AsyncAlltoallCUDAWork : public AsyncAlltoallWork {
   }
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Synchronize with copy operations.
     inputStreams.front().synchronize();
     outputStreams.front().synchronize();
@@ -2526,6 +2579,8 @@ class AsyncAlltoallCUDAWork : public AsyncAlltoallWork {
     guard.reset_stream(outputStreams.front());
     outputTensor.copy_(cpuOutput, /* non_blocking */ true);
     outputEvents.front().record(outputStreams.front());
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("alltoallCUDA_el: {} ms\n", elapsedTime.count());
   }
 
   void synchronize() override {
@@ -2694,6 +2749,7 @@ class AsyncBarrierWork : public ProcessGroupGloo::AsyncWork {
   const uint32_t tag;
 
   void run() override {
+    auto startTime = std::chrono::steady_clock::now();
     // Wait on prior work to complete
     for (auto& weakWork : priorWork) {
       auto work = weakWork.lock();
@@ -2705,6 +2761,8 @@ class AsyncBarrierWork : public ProcessGroupGloo::AsyncWork {
     gloo::BarrierOptions opts(context);
     opts.setTag(tag);
     gloo::barrier(opts);
+    std::chrono::duration<double, std::milli> elapsedTime = std::chrono::steady_clock::now() - startTime;
+    fmt::print("barrier_el: {} ms\n", elapsedTime.count());
   }
 };
 
